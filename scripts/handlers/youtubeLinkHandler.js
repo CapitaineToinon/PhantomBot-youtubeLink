@@ -27,28 +27,35 @@
 
     function getYouTubeVideoInfos(id) {
         var key = $.lang.get('youtube.linked.api.key');
+        if (key === '') {
+            return $.lang.get('youtube.linked.help');
+        }
+
         var url = $.lang.get('youtube.linked.api.url', id, key);
 
         var response = getCustomAPIValue(url);
         if (response) {
             var json = JSON.parse(response);
-            var likes = parseInt(json.items[0].statistics.likeCount);
-            var dislikes = parseInt(json.items[0].statistics.dislikeCount);
+            if (json.items.length > 0) {
+                var likes = parseInt(json.items[0].statistics.likeCount);
+                var dislikes = parseInt(json.items[0].statistics.dislikeCount);
 
-            var likes_ratio = likes / (likes + dislikes) * 100;
-            likes_ratio = Math.round(likes_ratio);
+                var likes_ratio = likes / (likes + dislikes) * 100;
+                likes_ratio = Math.round(likes_ratio);
 
 
-            return $.lang.get(
-                'youtube.linked.output',
-                json.items[0].snippet.title,
-                json.items[0].snippet.channelTitle,
-                numberWithCommas(json.items[0].statistics.viewCount),
-                likes_ratio
-            );
-        } else {
-            return false;
+                return $.lang.get(
+                    'youtube.linked.output',
+                    json.items[0].snippet.title,
+                    json.items[0].snippet.channelTitle,
+                    numberWithCommas(json.items[0].statistics.viewCount),
+                    likes_ratio
+                );
+            }
         }
+
+        // else
+        return false;
     }
 
 
@@ -73,10 +80,7 @@
 
 
     /**
-     * JavaScript function to match (and return) the video Id
-     * of any valid Youtube Url, given as input string.
-     * @author: Stephan Schmitz <eyecatchup@gmail.com>
-     * @url: https://stackoverflow.com/a/10315969/624466
+     * https://stackoverflow.com/a/10315969/624466
      */
     function ytVidId(message) {
         var p = $.lang.get('youtube.linked.regex');
