@@ -3,24 +3,25 @@
     var cache = {};
     var cache_lifespan = 30; // 30 seconds
 
-    function getYouTubeVideoInfosFromCache(id) {
-        if (!(id in cache)) {
-            cache[id] = {};
-            cache[id]['content'] = getYouTubeVideoInfos(id);
-            cache[id]['time'] = new Date().getTime() / 1000;
-
-            return cache[id]['content'];
+    function getYouTubeVideoInfosPerUser(id, sender) {
+        if (sender === '') {
+            return getYouTubeVideoInfos(id);
+        }
+        if (!(sender in cache)) {
+            cache[sender] = {};
+            cache[sender]['content'] = getYouTubeVideoInfos(id);
+            cache[sender]['time'] = $.systemTime();
+            return cache[sender]['content'];
         } else {
-            var now = new Date().getTime() / 1000;
-            if (now - cache[id]['time'] < cache_lifespan) {
+            if ($.systemTime() - cache[sender]['time'] < cache_lifespan * 1000) {
                 // Cache didn't expire yet so we ignore the link
                 return false;
             } else {
-                cache[id] = {};
-                cache[id]['content'] = getYouTubeVideoInfos(id);
-                cache[id]['time'] = new Date().getTime() / 1000;
+                cache[sender] = {};
+                cache[sender]['content'] = getYouTubeVideoInfos(id);
+                cache[sender]['time'] = $.systemTime();
 
-                return cache[id]['content'];
+                return cache[sender]['content'];
             }
         }
     }
@@ -43,6 +44,8 @@
                 var likes_ratio = likes / (likes + dislikes) * 100;
                 likes_ratio = Math.round(likes_ratio);
 
+                // Sets cooldown per user
+                //$.coolDown.set('youtubeLinkHandler', true, 30, false, sender);
 
                 return $.lang.get(
                     'youtube.linked.output',
@@ -101,7 +104,10 @@
         // But what if you want to check the message for a specific keyword? Here's how you would do it the simple way.
         var match = ytVidId(message);
         if (match) {
-            var output = getYouTubeVideoInfosFromCache(match);
+            if (sender === $.channelName) {
+                //sender = '';
+            }
+            var output = getYouTubeVideoInfosPerUser(match, sender);
             if (output) {
                 $.say(output);
             }
